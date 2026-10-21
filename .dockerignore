@@ -11,5 +11,5 @@ dist
 *.log
 *.tsbuildinfo
 Dockerfile
-docker-compose.yml
+docker-compose*.yml
 .dockerignore

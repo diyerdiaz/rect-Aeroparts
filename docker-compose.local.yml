@@ -1,0 +1,6 @@
+# Solo para correrlo fuera de Coolify (en tu equipo o un servidor sin proxy):
+#   docker compose -f docker-compose.yml -f docker-compose.local.yml up -d --build
+services:
+  web:
+    ports:
+      - "${WEB_PORT:-8080}:8080"

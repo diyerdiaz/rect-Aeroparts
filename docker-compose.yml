@@ -3,12 +3,16 @@ services:
     build:
       context: .
     image: aeroparts-web:latest
-    container_name: aeroparts-web
-    ports:
-      - "${WEB_PORT:-8080}:8080"
+    # Sin "ports": el proxy de Coolify (Traefik) llega al contenedor por la red interna,
+    # así no se ocupa ningún puerto del servidor. Para correrlo en tu equipo usa
+    # docker-compose.local.yml, que sí publica el puerto.
+    expose:
+      - "8080"
     environment:
+      # Coolify: genera el dominio y enruta el tráfico al puerto 8080 del contenedor.
+      - SERVICE_FQDN_WEB_8080
       # Backend FastAPI al que se redirige /api (sin barra al final).
-      API_UPSTREAM: ${API_UPSTREAM:-https://fastapi.inventarios.proyecto.lol}
+      - API_UPSTREAM=${API_UPSTREAM:-https://fastapi.inventarios.proyecto.lol}
     restart: unless-stopped
     security_opt:
       - no-new-privileges:true
