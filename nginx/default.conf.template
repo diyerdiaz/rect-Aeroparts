@@ -1,0 +1,47 @@
+# La imagen de Nginx reemplaza ${API_UPSTREAM} al arrancar (solo variables definidas).
+server {
+    listen 8080;
+    server_name _;
+    root /usr/share/nginx/html;
+    index index.html;
+
+    server_tokens off;
+    client_max_body_size 5m;
+
+    gzip on;
+    gzip_min_length 1024;
+    gzip_types text/css application/javascript application/json image/svg+xml;
+
+    location = /healthz {
+        access_log off;
+        default_type text/plain;
+        return 200 "ok";
+    }
+
+    # API: mismo dominio para el navegador, así no hace falta CORS.
+    location /api/ {
+        proxy_pass ${API_UPSTREAM};
+        proxy_ssl_server_name on;
+        proxy_set_header Host $proxy_host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_read_timeout 60s;
+        include /etc/nginx/snippets/security-headers.conf;
+    }
+
+    # Archivos con hash en el nombre: se pueden guardar en caché un año.
+    location /assets/ {
+        expires 1y;
+        add_header Cache-Control "public, immutable" always;
+        include /etc/nginx/snippets/security-headers.conf;
+        try_files $uri =404;
+    }
+
+    # Aplicación de una sola página: cualquier ruta (/login, /dashboard) carga index.html.
+    location / {
+        add_header Cache-Control "no-cache" always;
+        include /etc/nginx/snippets/security-headers.conf;
+        try_files $uri $uri/ /index.html;
+    }
+}

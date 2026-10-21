@@ -1,0 +1,21 @@
+services:
+  web:
+    build:
+      context: .
+    image: aeroparts-web:latest
+    container_name: aeroparts-web
+    ports:
+      - "${WEB_PORT:-8080}:8080"
+    environment:
+      # Backend FastAPI al que se redirige /api (sin barra al final).
+      API_UPSTREAM: ${API_UPSTREAM:-https://fastapi.inventarios.proyecto.lol}
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:8080/healthz"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
