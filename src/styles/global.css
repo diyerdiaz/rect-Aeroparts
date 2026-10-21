@@ -371,6 +371,189 @@ code { font-family: var(--mono); font-size: 0.75rem; letter-spacing: 0.02em; }
 }
 @keyframes sweep { to { transform: rotate(360deg); } }
 
+/* ---------- despegue (login) y aterrizaje (logout) ---------- */
+.flight {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  overflow: hidden;
+  pointer-events: none;
+  color: var(--text);
+  animation-fill-mode: forwards;
+}
+.flight__lane { position: absolute; width: 0; height: 0; }
+.flight__plane {
+  position: absolute;
+  width: 64px;
+  height: 64px;
+  margin: -32px 0 0 -32px;
+  animation-fill-mode: forwards;
+}
+.flight__plane svg { display: block; width: 100%; height: 100%; }
+.flight__trail {
+  position: absolute;
+  right: 100%;
+  top: 50%;
+  width: 50vw;
+  height: 2px;
+  margin-top: -1px;
+  border-radius: 999px;
+  background: linear-gradient(to right, transparent, currentColor);
+  opacity: 0.5;
+  transform-origin: right center;
+  animation-fill-mode: forwards;
+}
+
+/* Despegue: sube en diagonal acelerando y la pantalla se oscurece al final */
+.flight--takeoff { animation: flight-fade-late 1.5s ease-in; }
+.flight--takeoff .flight__lane { left: -10vw; bottom: 6vh; transform: rotate(-24deg); }
+.flight--takeoff .flight__plane { animation: takeoff-fly 1.4s cubic-bezier(0.4, 0, 0.7, 0.4); }
+.flight--takeoff .flight__trail { animation: trail-grow 1.4s ease-in; }
+@keyframes takeoff-fly {
+  from { transform: translateX(40vw) scale(0.8); }
+  to { transform: translateX(205vw) scale(1.3); }
+}
+@keyframes trail-grow {
+  from { transform: scaleX(0.1); }
+  to { transform: scaleX(1); }
+}
+@keyframes flight-fade-late {
+  0%, 55% { background: transparent; }
+  100% { background: var(--bg); }
+}
+
+/* Aterrizaje: la pantalla se oscurece, aparece la pista y el avión baja frenando */
+.flight--landing { animation: flight-fade-early 1.8s ease-out; }
+.flight__runway {
+  position: absolute;
+  left: 6vw;
+  right: 6vw;
+  top: calc(72vh - 36px);
+  height: 72px;
+  border-block: 2px solid currentColor;
+  opacity: 0;
+  background: linear-gradient(currentColor, currentColor) center / 100% 2px no-repeat;
+  -webkit-mask: repeating-linear-gradient(to right, #000 0 36px, rgb(0 0 0 / 0.35) 36px 60px);
+  mask: repeating-linear-gradient(to right, #000 0 36px, rgb(0 0 0 / 0.35) 36px 60px);
+  animation: runway-in 1.8s ease-out forwards;
+}
+.flight--landing .flight__lane { left: 58vw; top: 72vh; animation: landing-flare 1.8s forwards; }
+.flight--landing .flight__plane { animation: landing-fly 1.8s; }
+.flight--landing .flight__trail { animation: trail-fade 1.8s; }
+@keyframes flight-fade-early {
+  0% { background: transparent; }
+  30%, 100% { background: var(--bg); }
+}
+@keyframes runway-in {
+  0%, 10% { opacity: 0; }
+  35%, 100% { opacity: 0.3; }
+}
+/* La ruta baja con 14° de inclinación y se nivela al tocar la pista */
+@keyframes landing-flare {
+  0%, 66% { transform: rotate(14deg); }
+  80%, 100% { transform: rotate(0deg); }
+}
+@keyframes landing-fly {
+  0% { transform: translateX(-75vw) scale(1.3); animation-timing-function: cubic-bezier(0.2, 0.6, 0.4, 1); }
+  70% { transform: translateX(0) scale(0.95); animation-timing-function: ease-out; }
+  100% { transform: translateX(12vw) scale(0.9); }
+}
+@keyframes trail-fade {
+  0%, 60% { opacity: 0.5; }
+  85%, 100% { opacity: 0; }
+}
+
+/* Choque al fallar el inicio de sesión: dos aviones en diagonal, explosión gris y humo */
+.crash { position: fixed; inset: 0; z-index: 100; overflow: hidden; pointer-events: none; color: var(--text); }
+.crash__lane { position: absolute; top: 45%; left: 50%; width: 0; height: 0; transform: rotate(32deg); }
+.crash__plane { position: absolute; width: 56px; height: 56px; margin: -28px 0 0 -28px; }
+.crash__plane svg { display: block; width: 100%; height: 100%; }
+.crash__plane--left { animation: crash-from-left 0.55s cubic-bezier(0.5, 0, 1, 1) forwards; }
+.crash__plane--right { animation: crash-from-right 0.55s cubic-bezier(0.5, 0, 1, 1) forwards; }
+.crash__trail { position: absolute; top: 50%; width: 30vw; height: 2px; margin-top: -1px; opacity: 0.5; }
+.crash__plane--left .crash__trail { right: 100%; background: linear-gradient(to right, transparent, currentColor); }
+.crash__plane--right .crash__trail { left: 100%; background: linear-gradient(to left, transparent, currentColor); }
+@keyframes crash-from-left {
+  0% { transform: translateX(-70vmax); }
+  99% { transform: translateX(-18px); opacity: 1; }
+  100% { transform: translateX(-18px); opacity: 0; }
+}
+@keyframes crash-from-right {
+  0% { transform: translateX(70vmax); }
+  99% { transform: translateX(18px); opacity: 1; }
+  100% { transform: translateX(18px); opacity: 0; }
+}
+
+.crash__blast { position: absolute; top: 45%; left: 50%; width: 0; height: 0; }
+.crash__blast > span { position: absolute; border-radius: 50%; opacity: 0; }
+.crash__flash {
+  width: 160px;
+  height: 160px;
+  margin: -80px;
+  background: radial-gradient(circle, #fafaf9 0%, #d6d3d1 28%, #a8a29e 52%, rgb(120 113 108 / 0.5) 66%, transparent 70%);
+  animation: crash-flash 0.5s ease-out 0.55s forwards;
+}
+.crash__ring {
+  width: 100px;
+  height: 100px;
+  margin: -50px;
+  border: 2px solid #a8a29e;
+  animation: crash-ring 0.8s ease-out 0.55s forwards;
+}
+.crash__spark {
+  width: var(--s);
+  height: var(--s);
+  margin: calc(var(--s) / -2);
+  background: var(--c);
+  animation: crash-spark 0.8s cubic-bezier(0.1, 0.7, 0.3, 1) 0.55s forwards;
+}
+.crash__smoke {
+  left: var(--x);
+  top: var(--y);
+  width: var(--size);
+  height: var(--size);
+  margin: calc(var(--size) / -2);
+  background: radial-gradient(circle, rgb(120 113 108 / 0.75), rgb(120 113 108 / 0.35) 45%, transparent 70%);
+  animation: crash-smoke 1.6s ease-out forwards;
+}
+@keyframes crash-flash {
+  0% { opacity: 1; transform: scale(0.2); }
+  35% { opacity: 0.95; transform: scale(1.1); }
+  100% { opacity: 0; transform: scale(1.6); }
+}
+@keyframes crash-ring {
+  0% { opacity: 0.8; transform: scale(0.2); }
+  100% { opacity: 0; transform: scale(3.5); }
+}
+@keyframes crash-spark {
+  0% { opacity: 1; transform: rotate(var(--a)) translateX(0) scale(1); }
+  100% { opacity: 0; transform: rotate(var(--a)) translateX(var(--d)) scale(0.4); }
+}
+/* El humo aparece de golpe, crece, sube y se desvanece poco a poco */
+@keyframes crash-smoke {
+  0% { opacity: 0; transform: translate(0, 0) scale(0.3); }
+  12% { opacity: 0.95; }
+  100% { opacity: 0; transform: translate(var(--dx), var(--dy)) scale(2.3); }
+}
+
+/* La pantalla tiembla en el impacto y el formulario se sacude al mostrar el error */
+.auth:has(.crash) { animation: impact 0.35s ease-out 0.55s; }
+@keyframes impact {
+  20% { transform: translate(-6px, 3px); }
+  40% { transform: translate(5px, -4px); }
+  60% { transform: translate(-3px, 2px); }
+  80% { transform: translate(2px, -1px); }
+}
+.shake { animation: shake 0.4s ease-in-out; }
+@keyframes shake {
+  20%, 60% { transform: translateX(-8px); }
+  40%, 80% { transform: translateX(8px); }
+}
+
+/* Entrada suave del inventario */
+.dashboard .container { animation: rise 0.5s ease-out; }
+@keyframes rise { from { opacity: 0; transform: translateY(8px); } }
+
 /* ---------- modal ---------- */
 .modal {
   width: min(500px, calc(100% - 32px));

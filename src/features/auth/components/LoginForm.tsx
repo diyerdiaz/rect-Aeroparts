@@ -1,14 +1,35 @@
-import { useState, type FormEvent } from 'react';
+import { useCallback, useRef, useState, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '../../../components/Button';
 import { Input } from '../../../components/Input';
+import { prefersReducedMotion } from '../../../utils/motion';
 import { useAuth } from '../hooks/useAuth';
+import { InvalidCredentialsError } from '../services/authService';
+import { CrashOverlay } from './CrashOverlay';
+import { FlightOverlay } from './FlightOverlay';
 
 export function LoginForm() {
   const { login } = useAuth();
   const navigate = useNavigate();
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [takingOff, setTakingOff] = useState(false);
+  const [crashing, setCrashing] = useState(false);
+  const [shake, setShake] = useState(false);
+  const pendingError = useRef('');
+
+  const enterDashboard = useCallback(() => navigate('/dashboard', { replace: true }), [navigate]);
+
+  const showError = useCallback((message: string) => {
+    setError(message);
+    setShake(true);
+  }, []);
+
+  // El mensaje de error aparece cuando termina el choque.
+  const finishCrash = useCallback(() => {
+    setCrashing(false);
+    showError(pendingError.current);
+  }, [showError]);
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -20,16 +41,30 @@ export function LoginForm() {
         username: String(data.get('username')),
         password: String(data.get('password')),
       });
-      navigate('/dashboard', { replace: true });
+      if (prefersReducedMotion()) enterDashboard();
+      else setTakingOff(true);
     } catch (err) {
-      setError((err as Error).message);
+      const message = (err as Error).message;
+      if (err instanceof InvalidCredentialsError && !prefersReducedMotion()) {
+        pendingError.current = message;
+        setCrashing(true);
+      } else {
+        showError(message);
+      }
     } finally {
       setLoading(false);
     }
   }
 
+  const busy = loading || takingOff || crashing;
+
   return (
-    <form className="stack" onSubmit={handleSubmit} noValidate={false}>
+    <form
+      className={`stack ${shake ? 'shake' : ''}`}
+      onSubmit={handleSubmit}
+      onAnimationEnd={() => setShake(false)}
+      noValidate={false}
+    >
       <div>
         <h1 className="title">Iniciar sesión</h1>
         <p className="muted">Accede al inventario de repuestos.</p>
@@ -48,9 +83,18 @@ export function LoginForm() {
           {error}
         </p>
       )}
-      <Button type="submit" disabled={loading}>
-        {loading ? 'Entrando…' : 'Entrar'}
+      <Button type="submit" disabled={busy}>
+        {takingOff ? 'Despegando…' : loading ? 'Entrando…' : 'Entrar'}
       </Button>
+      {takingOff && (
+        <>
+          <span className="sr-only" role="status">
+            Sesión iniciada. Entrando al inventario.
+          </span>
+          <FlightOverlay mode="takeoff" onDone={enterDashboard} />
+        </>
+      )}
+      {crashing && <CrashOverlay onDone={finishCrash} />}
     </form>
   );
 }
