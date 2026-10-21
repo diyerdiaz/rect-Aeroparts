@@ -1,47 +1,49 @@
 import { memo } from 'react';
 import { EditIcon, TrashIcon } from '../../../components/icons';
 import { formatCurrency } from '../../../utils/format';
-import type { Part } from '../types/part';
+import type { Product } from '../types/product';
 import { PartMedia } from './PartMedia';
 import { StockBar } from './StockBar';
 
 interface Props {
-  part: Part;
-  onView: (part: Part) => void;
-  onEdit: (part: Part) => void;
-  onDelete: (part: Part) => void;
+  product: Product;
+  categoryName?: string;
+  supplierName?: string;
+  onView: (product: Product) => void;
+  onEdit: (product: Product) => void;
+  onDelete: (product: Product) => void;
 }
 
-export const PartCard = memo(function PartCard({ part, onView, onEdit, onDelete }: Props) {
+export const PartCard = memo(function PartCard({ product, categoryName, supplierName, onView, onEdit, onDelete }: Props) {
   return (
     <article className="card part">
       <div className="part__top">
-        <PartMedia part={part} className="part__media" />
-        <span className="tag part__tag">{part.category}</span>
+        <PartMedia name={product.name} categoryName={categoryName} image={product.image} className="part__media" />
+        <span className="tag part__tag">{categoryName ?? 'Sin categoría'}</span>
         <div className="part__actions">
-          <button className="icon-btn icon-btn--solid" onClick={() => onEdit(part)} aria-label={`Editar ${part.name}`}>
+          <button className="icon-btn icon-btn--solid" onClick={() => onEdit(product)} aria-label={`Editar ${product.name}`}>
             <EditIcon />
           </button>
-          <button className="icon-btn icon-btn--solid" onClick={() => onDelete(part)} aria-label={`Eliminar ${part.name}`}>
+          <button className="icon-btn icon-btn--solid" onClick={() => onDelete(product)} aria-label={`Eliminar ${product.name}`}>
             <TrashIcon />
           </button>
         </div>
       </div>
       <div className="part__body">
         {/* El botón se extiende sobre toda la tarjeta para abrir el detalle. */}
-        <button className="part__name part__link" onClick={() => onView(part)}>
-          {part.name}
+        <button className="part__link" onClick={() => onView(product)}>
+          {product.name}
         </button>
-        <code className="muted">{part.partNumber}</code>
-        <StockBar quantity={part.quantity} minStock={part.minStock} />
+        <code className="muted">{product.sku}</code>
+        <StockBar quantity={product.stock_quantity} minStock={product.min_stock} unit={product.unit} />
         <dl className="part__meta">
           <div>
-            <dt>Ubicación</dt>
-            <dd>{part.location}</dd>
+            <dt>{product.details.location ? 'Ubicación' : 'Proveedor'}</dt>
+            <dd>{product.details.location || supplierName || '—'}</dd>
           </div>
           <div>
-            <dt>Precio unitario</dt>
-            <dd>{formatCurrency(part.unitPrice)}</dd>
+            <dt>Precio</dt>
+            <dd>{formatCurrency(product.price)}</dd>
           </div>
         </dl>
       </div>

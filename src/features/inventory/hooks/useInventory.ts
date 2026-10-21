@@ -1,44 +1,77 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import * as inventoryService from '../services/inventoryService';
-import type { NewPart, Part } from '../types/part';
+import { isLowStock, type Category, type Product, type ProductInput, type Supplier } from '../types/product';
 
 export function useInventory() {
-  const [parts, setParts] = useState<Part[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
+  const load = useCallback(async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const [p, c, s] = await Promise.all([
+        inventoryService.getProducts(),
+        inventoryService.getCategories(),
+        inventoryService.getSuppliers(),
+      ]);
+      setProducts(p);
+      setCategories(c);
+      setSuppliers(s);
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
-    inventoryService
-      .getParts()
-      .then(setParts)
-      .catch((e: Error) => setError(e.message))
-      .finally(() => setLoading(false));
+    load();
+  }, [load]);
+
+  const addProduct = useCallback(async (data: ProductInput) => {
+    const product = await inventoryService.createProduct(data);
+    setProducts((prev) => [product, ...prev]);
   }, []);
 
-  const addPart = useCallback(async (data: NewPart) => {
-    const part = await inventoryService.createPart(data);
-    setParts((prev) => [part, ...prev]);
+  const updateProduct = useCallback(async (current: Product, data: ProductInput) => {
+    const product = await inventoryService.updateProduct(current, data);
+    setProducts((prev) => prev.map((p) => (p.id === product.id ? product : p)));
   }, []);
 
-  const updatePart = useCallback(async (id: string, data: NewPart) => {
-    const part = await inventoryService.updatePart(id, data);
-    setParts((prev) => prev.map((p) => (p.id === id ? part : p)));
+  const removeProduct = useCallback(async (id: number) => {
+    await inventoryService.deleteProduct(id);
+    setProducts((prev) => prev.filter((p) => p.id !== id));
   }, []);
 
-  const removePart = useCallback(async (id: string) => {
-    await inventoryService.deletePart(id);
-    setParts((prev) => prev.filter((p) => p.id !== id));
-  }, []);
+  const categoryNames = useMemo(() => new Map(categories.map((c) => [c.id, c.name])), [categories]);
+  const supplierNames = useMemo(() => new Map(suppliers.map((s) => [s.id, s.name])), [suppliers]);
 
   const metrics = useMemo(
     () => ({
-      references: parts.length,
-      units: parts.reduce((sum, p) => sum + p.quantity, 0),
-      lowStock: parts.filter((p) => p.quantity < p.minStock).length,
-      value: parts.reduce((sum, p) => sum + p.quantity * p.unitPrice, 0),
+      references: products.length,
+      units: products.reduce((sum, p) => sum + p.stock_quantity, 0),
+      lowStock: products.filter(isLowStock).length,
+      value: products.reduce((sum, p) => sum + p.stock_quantity * p.price, 0),
     }),
-    [parts],
+    [products],
   );
 
-  return { parts, loading, error, metrics, addPart, updatePart, removePart };
+  return {
+    products,
+    categories,
+    suppliers,
+    categoryNames,
+    supplierNames,
+    loading,
+    error,
+    metrics,
+    reload: load,
+    addProduct,
+    updateProduct,
+    removeProduct,
+  };
 }

@@ -6,7 +6,7 @@ import { useAuth } from '../features/auth/hooks/useAuth';
 
 export function DashboardLayout({ children }: { children: ReactNode }) {
   const { user, logout } = useAuth();
-  const initial = user?.name.charAt(0).toUpperCase() ?? '?';
+  const initial = user?.username.charAt(0).toUpperCase() ?? '?';
   return (
     <div className="dashboard">
       <SkyBackground />

@@ -1,27 +1,35 @@
 import { EmptyHangar } from '../../../components/illustrations/EmptyHangar';
-import type { Part } from '../types/part';
+import type { Product } from '../types/product';
 import { PartCard } from './PartCard';
 
 interface Props {
-  parts: Part[];
-  onView: (part: Part) => void;
-  onEdit: (part: Part) => void;
-  onDelete: (part: Part) => void;
+  products: Product[];
+  categoryNames: Map<number, string>;
+  supplierNames: Map<number, string>;
+  onView: (product: Product) => void;
+  onEdit: (product: Product) => void;
+  onDelete: (product: Product) => void;
 }
 
-export function PartsGrid({ parts, ...handlers }: Props) {
-  if (parts.length === 0)
+export function PartsGrid({ products, categoryNames, supplierNames, ...handlers }: Props) {
+  if (products.length === 0)
     return (
       <div className="empty">
         <EmptyHangar className="empty__art" />
-        <p>No hay repuestos</p>
+        <p>No hay productos</p>
         <span className="muted">Prueba otra búsqueda o añade uno nuevo.</span>
       </div>
     );
   return (
     <div className="grid">
-      {parts.map((part) => (
-        <PartCard key={part.id} part={part} {...handlers} />
+      {products.map((p) => (
+        <PartCard
+          key={p.id}
+          product={p}
+          categoryName={p.category_id != null ? categoryNames.get(p.category_id) : undefined}
+          supplierName={p.supplier_id != null ? supplierNames.get(p.supplier_id) : undefined}
+          {...handlers}
+        />
       ))}
     </div>
   );

@@ -1,12 +1,30 @@
-import { delay } from '../../../services/httpClient';
-import type { Credentials, Session } from '../types/auth';
+import { ApiError, http, TOKEN_KEY } from '../../../services/httpClient';
+import type { Credentials, Session, User } from '../types/auth';
 
-// TODO: reemplazar por http<Session>('/auth/login', { method: 'POST', body: JSON.stringify(credentials) })
-export async function login({ username, password }: Credentials): Promise<Session> {
-  await delay(500);
-  if (username.trim().length < 3 || password.length < 6) throw new Error('Usuario o contraseña incorrectos');
-  return {
-    token: crypto.randomUUID(),
-    user: { id: '1', name: username.trim(), username: username.trim().toLowerCase() },
-  };
+interface TokenResponse {
+  access_token: string;
+  token_type: string;
 }
+
+export async function login(credentials: Credentials): Promise<Session> {
+  let token: TokenResponse;
+  try {
+    token = await http<TokenResponse>('/api/auth/login/json', {
+      method: 'POST',
+      body: JSON.stringify(credentials),
+    });
+  } catch (e) {
+    if (e instanceof ApiError && (e.status === 401 || e.status === 400 || e.status === 422))
+      throw new Error('Usuario o contraseña incorrectos');
+    throw e;
+  }
+  localStorage.setItem(TOKEN_KEY, token.access_token);
+  try {
+    return { token: token.access_token, user: await me() };
+  } catch (e) {
+    localStorage.removeItem(TOKEN_KEY);
+    throw e;
+  }
+}
+
+export const me = () => http<User>('/api/auth/me');

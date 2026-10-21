@@ -1,14 +1,20 @@
-import type { Part } from '../types/part';
 import { CategoryIcon } from './CategoryIcon';
 
-/** Imagen del repuesto o, si no tiene, la ilustración de su categoría. */
-export function PartMedia({ part, className = '' }: { part: Pick<Part, 'name' | 'category' | 'image'>; className?: string }) {
+interface Props {
+  name: string;
+  categoryName?: string;
+  image?: string;
+  className?: string;
+}
+
+/** Imagen del producto o, si no tiene, la ilustración de su categoría. */
+export function PartMedia({ name, categoryName, image, className = '' }: Props) {
   return (
     <div className={`media ${className}`}>
-      {part.image ? (
-        <img src={part.image} alt={part.name} className="media__img" loading="lazy" />
+      {image ? (
+        <img src={image} alt={name} className="media__img" loading="lazy" />
       ) : (
-        <CategoryIcon category={part.category} className="media__art" />
+        <CategoryIcon name={categoryName} className="media__art" />
       )}
     </div>
   );

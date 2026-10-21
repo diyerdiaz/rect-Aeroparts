@@ -165,6 +165,32 @@ code { font-family: var(--mono); font-size: 0.75rem; letter-spacing: 0.02em; }
   align-self: center;
   color: var(--text);
 }
+/* animación del avión y el radar del login */
+.aircraft * { transform-box: view-box; transform-origin: 200px 200px; }
+.aircraft__sweep { animation: sweep 6s linear infinite; }
+.aircraft__rings { animation: sweep 90s linear infinite reverse; }
+.aircraft__pulse { opacity: 0; animation: pulse 4s ease-out infinite; }
+.aircraft__blip { opacity: 0; transform-origin: center; transform-box: fill-box; animation: blip 6s ease-out infinite; }
+.aircraft__plane { animation: float 7s ease-in-out infinite; }
+.aircraft__trails { opacity: 0.35; animation: trail 0.9s linear infinite; }
+.aircraft__beacon { transform-box: fill-box; transform-origin: center; animation: beacon 1.6s ease-in-out infinite; }
+
+@keyframes pulse {
+  from { transform: scale(0.05); opacity: 0.5; }
+  to { transform: scale(1); opacity: 0; }
+}
+@keyframes blip {
+  0%, 100% { opacity: 0; transform: scale(0.4); }
+  8% { opacity: 0.9; transform: scale(1.4); }
+  40% { opacity: 0.25; transform: scale(1); }
+}
+@keyframes float {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  25% { transform: translateY(-6px) rotate(1.5deg); }
+  75% { transform: translateY(6px) rotate(-1.5deg); }
+}
+@keyframes trail { to { stroke-dashoffset: -16; } }
+@keyframes beacon { 50% { opacity: 0.2; } }
 .auth__lead { font-size: 2.25rem; font-weight: 600; letter-spacing: -0.04em; max-width: 14ch; line-height: 1.1; }
 .auth__features { list-style: none; padding: 0; margin: 24px 0 0; display: grid; gap: 10px; color: var(--muted); }
 .auth__features li { display: flex; align-items: center; gap: 10px; }
@@ -226,7 +252,7 @@ code { font-family: var(--mono); font-size: 0.75rem; letter-spacing: 0.02em; }
 .part { position: relative; overflow: hidden; transition: border-color 0.2s, transform 0.2s; }
 .part:hover { border-color: var(--muted); transform: translateY(-2px); }
 .part__top { position: relative; border-bottom: 1px solid var(--border); }
-.part__media { height: 160px; }
+.part__media { aspect-ratio: 16 / 10; }
 .part__tag { position: absolute; top: 12px; left: 12px; }
 .part__actions {
   position: absolute;
@@ -387,7 +413,7 @@ input:focus-visible + .upload { outline: 2px solid var(--text); outline-offset: 
 
 /* ---------- detalle ---------- */
 .detail { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; }
-.detail__media { aspect-ratio: 1; border-radius: var(--radius); border: 1px solid var(--border); }
+.detail__media { aspect-ratio: 16 / 10; align-self: start; border-radius: var(--radius); border: 1px solid var(--border); }
 .detail__media .media__art { width: 120px; height: 120px; }
 .detail__name { font-size: 1.375rem; font-weight: 600; letter-spacing: -0.02em; margin-top: 10px; }
 .detail__grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 16px; padding-top: 16px; border-top: 1px solid var(--border); }
@@ -395,6 +421,10 @@ input:focus-visible + .upload { outline: 2px solid var(--text); outline-offset: 
 .detail__grid dd { font-size: 0.9375rem; font-weight: 500; }
 .detail__actions { justify-content: flex-end; margin-top: auto; }
 .detail .tag { display: inline-block; }
+.detail__desc { margin-top: 10px; }
+textarea.field__input { resize: vertical; min-height: 72px; }
+.hint { font-size: 0.8125rem; margin-top: -8px; }
+.notice { padding: 20px; display: flex; justify-content: space-between; align-items: center; gap: 16px; }
 
 @keyframes pop {
   from { opacity: 0; transform: translateY(8px) scale(0.98); }
@@ -414,6 +444,6 @@ input:focus-visible + .upload { outline: 2px solid var(--text); outline-offset: 
   .topbar, .container { padding-left: 16px; padding-right: 16px; }
   .topbar__user { display: none; }
   .detail { grid-template-columns: 1fr; }
-  .detail__media { aspect-ratio: 16 / 10; }
+
   .title { font-size: 1.5rem; }
 }
