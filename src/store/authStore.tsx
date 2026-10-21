@@ -9,6 +9,8 @@ interface AuthContextValue {
   user: User | null;
   login: (credentials: Credentials) => Promise<void>;
   logout: () => void;
+  /** Actualiza los datos del usuario en sesión (por ejemplo, tras editar el perfil). */
+  setCurrentUser: (user: User) => void;
 }
 
 export const AuthContext = createContext<AuthContextValue | null>(null);
@@ -30,6 +32,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem(USER_KEY);
     localStorage.removeItem(TOKEN_KEY);
     setUser(null);
+  }, []);
+
+  const setCurrentUser = useCallback((fresh: User) => {
+    localStorage.setItem(USER_KEY, JSON.stringify(fresh));
+    setUser(fresh);
   }, []);
 
   const login = useCallback(async (credentials: Credentials) => {
@@ -58,6 +65,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => window.removeEventListener(UNAUTHORIZED_EVENT, logout);
   }, [logout]);
 
-  const value = useMemo(() => ({ user, login, logout }), [user, login, logout]);
+  const value = useMemo(
+    () => ({ user, login, logout, setCurrentUser }),
+    [user, login, logout, setCurrentUser],
+  );
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

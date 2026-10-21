@@ -35,3 +35,30 @@ export async function login(credentials: Credentials): Promise<Session> {
 }
 
 export const me = () => http<User>('/api/auth/me');
+
+export interface ProfileInput {
+  username: string;
+  email: string;
+  full_name: string | null;
+}
+
+interface ProfileUpdateResponse {
+  user: User;
+  access_token: string;
+}
+
+/**
+ * Actualiza el perfil propio. El token lleva el nombre de usuario, así que el servidor
+ * devuelve uno nuevo y se guarda para no perder la sesión.
+ */
+export async function updateMe(data: ProfileInput): Promise<User> {
+  const res = await http<ProfileUpdateResponse>('/api/auth/me', { method: 'PUT', body: JSON.stringify(data) });
+  localStorage.setItem(TOKEN_KEY, res.access_token);
+  return res.user;
+}
+
+export const changePassword = (current_password: string, new_password: string) =>
+  http<void>('/api/auth/change-password', {
+    method: 'POST',
+    body: JSON.stringify({ current_password, new_password }),
+  });
